@@ -2737,9 +2737,16 @@ export class BaileysStartupService extends ChannelStartupService {
         imageBuffer = Buffer.from(base64Data, 'base64');
       } else {
         const timestamp = new Date().getTime();
-        const parsedURL = new URL(image);
-        parsedURL.searchParams.set('timestamp', timestamp.toString());
-        const url = parsedURL.toString();
+        let url = image;
+
+        try {
+          const parsedURL = new URL(image);
+          parsedURL.searchParams.set('timestamp', timestamp.toString());
+          url = parsedURL.toString();
+        } catch (error) {
+          this.logger.error(`Invalid URL for image conversion: ${image}`);
+          throw new Error('Invalid image URL');
+        }
 
         let config: any = { responseType: 'arraybuffer' };
 
@@ -2961,9 +2968,16 @@ export class BaileysStartupService extends ChannelStartupService {
 
       if (isURL(audio)) {
         const timestamp = new Date().getTime();
-        const parsedURL = new URL(audio);
-        parsedURL.searchParams.set('timestamp', timestamp.toString());
-        const url = parsedURL.toString();
+        let url = audio;
+
+        try {
+          const parsedURL = new URL(audio);
+          parsedURL.searchParams.set('timestamp', timestamp.toString());
+          url = parsedURL.toString();
+        } catch (error) {
+          this.logger.error(`Invalid URL for audio: ${audio}`);
+          throw new Error('Invalid audio URL');
+        }
 
         const config: any = { responseType: 'stream' };
 
@@ -3895,9 +3909,16 @@ export class BaileysStartupService extends ChannelStartupService {
       let pic: WAMediaUpload;
       if (isURL(picture)) {
         const timestamp = new Date().getTime();
-        const parsedURL = new URL(picture);
-        parsedURL.searchParams.set('timestamp', timestamp.toString());
-        const url = parsedURL.toString();
+        let url = picture;
+
+        try {
+          const parsedURL = new URL(picture);
+          parsedURL.searchParams.set('timestamp', timestamp.toString());
+          url = parsedURL.toString();
+        } catch (error) {
+          this.logger.error(`Invalid URL for picture: ${picture}`);
+          throw new Error('Invalid picture URL');
+        }
 
         let config: any = { responseType: 'arraybuffer' };
 
@@ -4189,9 +4210,16 @@ export class BaileysStartupService extends ChannelStartupService {
       let pic: WAMediaUpload;
       if (isURL(picture.image)) {
         const timestamp = new Date().getTime();
-        const parsedURL = new URL(picture.image);
-        parsedURL.searchParams.set('timestamp', timestamp.toString());
-        const url = parsedURL.toString();
+        let url = picture.image;
+
+        try {
+          const parsedURL = new URL(picture.image);
+          parsedURL.searchParams.set('timestamp', timestamp.toString());
+          url = parsedURL.toString();
+        } catch (error) {
+          this.logger.error(`Invalid URL for group picture: ${picture.image}`);
+          throw new Error('Invalid group picture URL');
+        }
 
         let config: any = { responseType: 'arraybuffer' };
 

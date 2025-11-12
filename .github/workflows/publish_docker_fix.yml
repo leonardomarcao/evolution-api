@@ -1,13 +1,13 @@
-name: Build Docker image
+name: Build Docker Fix Image
 
 on:
   push:
     branches:
-      - main
+      - fix/chatwoot-image-error
 
 jobs:
   build_deploy:
-    name: Build and Deploy
+    name: Build and Deploy Fix
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -23,7 +23,9 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: leonardomarcaof/evolution-api
-          tags: latest
+          tags: |
+            type=raw,value=2.3.6-fix
+            type=raw,value=fix-latest
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
