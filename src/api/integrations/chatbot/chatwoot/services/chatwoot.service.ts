@@ -1143,7 +1143,19 @@ export class ChatwootService {
 
   public async sendAttachment(waInstance: any, number: string, media: any, caption?: string, options?: Options) {
     try {
-      const parsedMedia = path.parse(decodeURIComponent(media));
+      if (!media || typeof media !== 'string') {
+        this.logger.error(`Media URL is invalid: ${media}`);
+        throw new Error('Valid media URL is required');
+      }
+
+      let parsedMedia;
+      try {
+        parsedMedia = path.parse(decodeURIComponent(media));
+      } catch (error) {
+        this.logger.error(`Error parsing media URL: ${error.message}`);
+        throw new Error('Failed to parse media URL');
+      }
+
       let mimeType = mimeTypes.lookup(parsedMedia?.ext) || '';
       let fileName = parsedMedia?.name + parsedMedia?.ext;
 
@@ -1423,6 +1435,13 @@ export class ChatwootService {
               if (!messageReceived) {
                 formatText = null;
               }
+
+              if (!attachment.data_url) {
+                this.logger.warn('Attachment data_url is missing, skipping attachment');
+                continue;
+              }
+
+              this.logger.verbose(`Processing attachment with data_url: ${attachment.data_url}`);
 
               const options: Options = {
                 quoted: await this.getQuotedMessage(body, instance),
@@ -2119,7 +2138,7 @@ export class ChatwootService {
         }
 
         const isAdsMessage = (adsMessage && adsMessage.title) || adsMessage.body || adsMessage.thumbnailUrl;
-        if (isAdsMessage) {
+        if (isAdsMessage && adsMessage.thumbnailUrl) {
           const imgBuffer = await axios.get(adsMessage.thumbnailUrl, { responseType: 'arraybuffer' });
 
           const extension = mimeTypes.extension(imgBuffer.headers['content-type']);
@@ -2164,6 +2183,34 @@ export class ChatwootService {
             instance,
             body,
             'WAID:' + body.key.id,
+          );
+
+          if (!send) {
+            this.logger.warn('message not sent');
+            return;
+          }
+
+          return send;
+        } else if (isAdsMessage) {
+          // Handle ads message without thumbnail
+          const truncStr = (str: string, len: number) => {
+            if (!str) return '';
+            return str.length > len ? str.substring(0, len) + '...' : str;
+          };
+
+          const title = truncStr(adsMessage.title, 40);
+          const description = truncStr(adsMessage?.body, 75);
+
+          const send = await this.createMessage(
+            instance,
+            getConversation,
+            `${bodyMessage}\n\n\n**${title}**\n${description}\n${adsMessage.sourceUrl || ''}`,
+            messageType,
+            false,
+            [],
+            body,
+            'WAID:' + body.key.id,
+            quotedMsg,
           );
 
           if (!send) {
