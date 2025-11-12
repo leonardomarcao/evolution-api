@@ -180,13 +180,30 @@ class ChatwootImport {
     try {
       const existingSourceIdsSet = new Set<string>();
 
-      if (sourceIds.length === 0) {
+      if (!sourceIds || sourceIds.length === 0) {
+        this.logger.verbose('getExistingSourceIds called with empty sourceIds array');
+        return existingSourceIdsSet;
+      }
+
+      // Filter out invalid sourceIds (null, undefined, empty strings)
+      const validSourceIds = sourceIds.filter((sourceId) => sourceId && typeof sourceId === 'string');
+
+      if (validSourceIds.length === 0) {
+        this.logger.verbose('getExistingSourceIds: all sourceIds were invalid after filtering');
         return existingSourceIdsSet;
       }
 
       // Ensure all sourceIds are consistently prefixed with 'WAID:' as required by downstream systems and database queries.
-      const formattedSourceIds = sourceIds.map((sourceId) => `WAID:${sourceId.replace('WAID:', '')}`);
+      const formattedSourceIds = validSourceIds.map((sourceId) => `WAID:${sourceId.replace('WAID:', '')}`);
+
+      this.logger.verbose(`getExistingSourceIds: checking ${formattedSourceIds.length} sourceIds`);
+
       const pgClient = postgresClient.getChatwootConnection();
+
+      if (!pgClient) {
+        this.logger.error('PostgreSQL client is not initialized');
+        return existingSourceIdsSet;
+      }
 
       const params = conversationId ? [formattedSourceIds, conversationId] : [formattedSourceIds];
 
@@ -194,14 +211,23 @@ class ChatwootImport {
         ? 'SELECT source_id FROM messages WHERE source_id = ANY($1) AND conversation_id = $2'
         : 'SELECT source_id FROM messages WHERE source_id = ANY($1)';
 
+      this.logger.verbose(`Executing query with ${params.length} params`);
+
       const result = await pgClient.query(query, params);
-      for (const row of result.rows) {
-        existingSourceIdsSet.add(row.source_id);
+
+      if (result && result.rows) {
+        for (const row of result.rows) {
+          if (row && row.source_id) {
+            existingSourceIdsSet.add(row.source_id);
+          }
+        }
+        this.logger.verbose(`Found ${existingSourceIdsSet.size} existing sourceIds`);
       }
 
       return existingSourceIdsSet;
     } catch (error) {
       this.logger.error(`Error on getExistingSourceIds: ${error.toString()}`);
+      this.logger.error(`Error stack: ${error.stack}`);
       return new Set<string>();
     }
   }
