@@ -2736,18 +2736,6 @@ export class BaileysStartupService extends ChannelStartupService {
         const base64Data = image.replace(/^data:image\/(jpeg|png|gif);base64,/, '');
         imageBuffer = Buffer.from(base64Data, 'base64');
       } else {
-        const timestamp = new Date().getTime();
-        let url = image;
-
-        try {
-          const parsedURL = new URL(image);
-          parsedURL.searchParams.set('timestamp', timestamp.toString());
-          url = parsedURL.toString();
-        } catch (error) {
-          this.logger.error(`Invalid URL for image conversion: ${image}`);
-          throw new Error('Invalid image URL');
-        }
-
         let config: any = { responseType: 'arraybuffer' };
 
         if (this.localProxy?.enabled) {
@@ -2763,7 +2751,7 @@ export class BaileysStartupService extends ChannelStartupService {
           };
         }
 
-        const response = await axios.get(url, config);
+        const response = await axios.get(image, config);
         imageBuffer = Buffer.from(response.data, 'binary');
       }
 
@@ -2967,21 +2955,9 @@ export class BaileysStartupService extends ChannelStartupService {
       let inputAudioStream: PassThrough;
 
       if (isURL(audio)) {
-        const timestamp = new Date().getTime();
-        let url = audio;
-
-        try {
-          const parsedURL = new URL(audio);
-          parsedURL.searchParams.set('timestamp', timestamp.toString());
-          url = parsedURL.toString();
-        } catch (error) {
-          this.logger.error(`Invalid URL for audio: ${audio}`);
-          throw new Error('Invalid audio URL');
-        }
-
         const config: any = { responseType: 'stream' };
 
-        const response = await axios.get(url, config);
+        const response = await axios.get(audio, config);
         inputAudioStream = response.data.pipe(new PassThrough());
       } else {
         const audioBuffer = Buffer.from(audio, 'base64');
@@ -3908,18 +3884,6 @@ export class BaileysStartupService extends ChannelStartupService {
     try {
       let pic: WAMediaUpload;
       if (isURL(picture)) {
-        const timestamp = new Date().getTime();
-        let url = picture;
-
-        try {
-          const parsedURL = new URL(picture);
-          parsedURL.searchParams.set('timestamp', timestamp.toString());
-          url = parsedURL.toString();
-        } catch (error) {
-          this.logger.error(`Invalid URL for picture: ${picture}`);
-          throw new Error('Invalid picture URL');
-        }
-
         let config: any = { responseType: 'arraybuffer' };
 
         if (this.localProxy?.enabled) {
@@ -3935,7 +3899,7 @@ export class BaileysStartupService extends ChannelStartupService {
           };
         }
 
-        pic = (await axios.get(url, config)).data;
+        pic = (await axios.get(picture, config)).data;
       } else if (isBase64(picture)) {
         pic = Buffer.from(picture, 'base64');
       } else {
@@ -4209,18 +4173,6 @@ export class BaileysStartupService extends ChannelStartupService {
     try {
       let pic: WAMediaUpload;
       if (isURL(picture.image)) {
-        const timestamp = new Date().getTime();
-        let url = picture.image;
-
-        try {
-          const parsedURL = new URL(picture.image);
-          parsedURL.searchParams.set('timestamp', timestamp.toString());
-          url = parsedURL.toString();
-        } catch (error) {
-          this.logger.error(`Invalid URL for group picture: ${picture.image}`);
-          throw new Error('Invalid group picture URL');
-        }
-
         let config: any = { responseType: 'arraybuffer' };
 
         if (this.localProxy?.enabled) {
@@ -4236,7 +4188,7 @@ export class BaileysStartupService extends ChannelStartupService {
           };
         }
 
-        pic = (await axios.get(url, config)).data;
+        pic = (await axios.get(picture.image, config)).data;
       } else if (isBase64(picture.image)) {
         pic = Buffer.from(picture.image, 'base64');
       } else {
